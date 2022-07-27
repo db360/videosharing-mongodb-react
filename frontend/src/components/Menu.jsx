@@ -20,6 +20,7 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import SettingsBrightnessOutlinedIcon from "@mui/icons-material/SettingsBrightnessOutlined";
+import { useSelector } from "react-redux";
 
 const Container = styled.div`
   flex: 2;
@@ -104,6 +105,8 @@ const Title = styled.h2`
 `;
 
 const Menu = ({ darkMode, setDarkMode }) => {
+  const { currentUser } = useSelector((state) => state.user);
+
   return (
     <Container>
       <Wrapper>
@@ -123,7 +126,10 @@ const Menu = ({ darkMode, setDarkMode }) => {
             Explore
           </Item>
         </Link>
-        <Link to="subscriptions" style={{ textDecoration: "none", color: "inherit" }}>
+        <Link
+          to="subscriptions"
+          style={{ textDecoration: "none", color: "inherit" }}
+        >
           <Item>
             <SubscriptionsOutlinedIcon />
             Subscriptions
@@ -139,16 +145,20 @@ const Menu = ({ darkMode, setDarkMode }) => {
           History
         </Item>
         <Hr />
-        <Login>
-          Sign in to like videos, comment, and subscribe.
-          <Link to="signin" style={{ textDecoration: "none" }}>
-            <Button>
-              <AccountCircleOutlinedIcon />
-              SIGN IN
-            </Button>
-          </Link>
-        </Login>
-        <Hr />
+        {!currentUser &&
+          <>
+            <Login>
+              Sign in to like videos, comment, and subscribe.
+              <Link to="signin" style={{ textDecoration: "none" }}>
+                <Button>
+                  <AccountCircleOutlinedIcon />
+                  SIGN IN
+                </Button>
+              </Link>
+            </Login>
+            <Hr />
+          </>
+        }
         <Title>Best Of Da.BTube</Title>
         <Item>
           <LibraryMusicOutlinedIcon />
