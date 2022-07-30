@@ -105,7 +105,7 @@ const SignIn = () => {
     })
   })
     .catch((error) => {
-      dispatch(loginError());
+      dispatch(loginError(error));
     })
 };
 

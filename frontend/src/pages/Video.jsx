@@ -1,14 +1,20 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
+import ThumbUp from "@mui/icons-material/ThumbUp";
+import ThumbDown from "@mui/icons-material/ThumbDown";
 import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
 import ReplyOutlinedIcon from "@mui/icons-material/ReplyOutlined";
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
 
-import dabLogo from "../img/dab_logo.png";
 import Comments from "../components/Comments";
 import Card from "../components/Card";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+import { fetchSuccess } from "../redux/videoSlice";
+import { format } from "timeago.js";
 
 const Container = styled.div`
   display: flex;
@@ -97,11 +103,10 @@ const ChannelCounter = styled.span`
   margin-bottom: 20px;
   color: ${({ theme }) => theme.textSoft};
   font-size: 12px;
-
-  `;
+`;
 
 const Description = styled.p`
-  font-size: 14px;
+  font-size: 16px;
 `;
 
 const Subscribe = styled.button`
@@ -116,6 +121,45 @@ const Subscribe = styled.button`
 `;
 
 const Video = () => {
+  const { currentUser } = useSelector((state) => state.user);
+  const { currentVideo } = useSelector((state) => state.video);
+  const dispatch = useDispatch();
+
+  // sacar el id del video de los params;
+  const path = useLocation().pathname.split("/")[2];
+
+  const [channel, setChannel] = useState({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const videoRes = await axios.get(`/videos/find/${path}`);
+        const channelRes = await axios.get(
+          `/users/find/${videoRes.data.userId}`
+        );
+
+        // console.log(videoRes.data.userId, "VideoRES")
+        // console.log(channelRes, "channelRES");
+
+        setChannel(channelRes.data);
+        dispatch(fetchSuccess(videoRes.data));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchData();
+  }, [path, dispatch]);
+
+  const handleLike = async () => {
+    await axios.put(`/users/like/${currentVideo._id}`)
+  }
+  const handleDislike = async () => {
+    await axios.put(`/users/dislike/${currentVideo._id}`)
+  }
+
+  // console.log(path);
+  // console.log(currentVideo)
   return (
     <Container>
       <Content>
@@ -130,17 +174,27 @@ const Video = () => {
             allowFullScreen
           ></iframe>
         </VideoWrapper>
-        <Title>Test Video</Title>
+        <Title>{currentVideo.title}</Title>
         <Details>
-          <Info>654.651 views • Jun 22, 2021</Info>
+          <Info>
+            {currentVideo.views} views • {format(currentVideo.createdAt)}
+          </Info>
           <Buttons>
-            <Button>
-              <ThumbUpOutlinedIcon />
-              152
+            <Button onClick={handleLike}>
+              {currentVideo.likes?.includes(currentUser._id) ? (
+                <ThumbUp />
+              ) : (
+                <ThumbUpOutlinedIcon />
+              )}{" "}
+              {currentVideo.likes?.length}
             </Button>
-            <Button>
-              <ThumbDownOutlinedIcon />
-              Dislike
+            <Button onClick={handleDislike}>
+              {currentVideo.dislikes?.includes(currentUser._id) ? (
+                <ThumbDown />
+              ) : (
+                <ThumbDownOutlinedIcon />
+              )}{" "}
+              {currentVideo.dislikes?.length}
             </Button>
             <Button>
               <ReplyOutlinedIcon />
@@ -156,17 +210,12 @@ const Video = () => {
         <Channel>
           <ChannelInfo>
             <ImgContainer>
-              <Image src={dabLogo} />
+              <Image src={channel.img} />
             </ImgContainer>
             <ChannelDetail>
-              <ChannelName>Da.B Martínez</ChannelName>
-              <ChannelCounter>150k Subscribers</ChannelCounter>
-              <Description>
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-                Praesentium esse magni eligendi, doloremque sit sunt, dicta vel
-                dolore soluta consectetur similique laboriosam? Iste consequatur
-                minus, a unde atque eius facere!
-              </Description>
+              <ChannelName>{channel.name}</ChannelName>
+              <ChannelCounter>{channel.subscribers} Subscribers</ChannelCounter>
+              <Description>{currentVideo?.desc}</Description>
             </ChannelDetail>
           </ChannelInfo>
           <Subscribe>SUBSCRIBE</Subscribe>
@@ -174,7 +223,7 @@ const Video = () => {
         <Hr />
         <Comments />
       </Content>
-      <Recommendations>
+      {/* <Recommendations>
         <Card type="sm" />
         <Card type="sm" />
         <Card type="sm" />
@@ -186,7 +235,7 @@ const Video = () => {
         <Card type="sm" />
         <Card type="sm" />
         <Card type="sm" />
-      </Recommendations>
+      </Recommendations> */}
     </Container>
   );
 };
