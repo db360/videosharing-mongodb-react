@@ -1,4 +1,5 @@
-import React from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import dabLogo from "../img/dab_logo.png";
 
@@ -50,18 +51,31 @@ const Text = styled.span`
 
 `;
 
-const Comment = () => {
+const Comment = ({comment}) => {
+
+  const [channel, setChannel] = useState({});
+
+  useEffect(() => {
+    const fetchComments = async() =>{
+        const res = await axios.get(
+            `/users/find/${comment.userId}`
+        );
+        setChannel(res.data)
+    };
+    fetchComments();
+  }, [comment.userId]);
+
   return (
     <Container>
         <ImgContainer>
-            <Avatar src={dabLogo} />
+            <Avatar src={channel?.img} />
         </ImgContainer>
         <Details>
             <Name>
-                John Doe <Date>1 day ago</Date>
+                {channel?.name} <Date>1 day ago</Date>
             </Name>
             <Text>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit
+                {comment?.desc}
             </Text>
         </Details>
     </Container>

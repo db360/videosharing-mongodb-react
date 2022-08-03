@@ -1,7 +1,10 @@
-import React from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 
 import dabLogo from "../img/dab_logo.png";
+import { fetchError } from "../redux/videoSlice";
 import Comment from "./Comment";
 
 const Container = styled.div``;
@@ -38,22 +41,36 @@ const Input = styled.input`
   color: ${({ theme }) => theme.text};
 `;
 
-const Comments = () => {
+const Comments = ({ videoId }) => {
+
+  const dispatch = useDispatch();
+  const {currentUser} = useSelector((state) => state.user);
+  const [comments, setComments] = useState([]);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const res = await axios.get(`/comments/${videoId}`);
+        setComments(res.data);
+      } catch (err) {
+        dispatch(fetchError(err))
+      };
+    };
+    fetchComments();
+  }, [videoId, dispatch]);
+
   return (
     <Container>
       <NewComment>
         <ImgContainer>
-          <Avatar src={dabLogo} />
+          <Avatar src={currentUser.img} />
         </ImgContainer>
         <Input type="text" placeholder="Add a comment..." />
       </NewComment>
-      <Comment />
-      <Comment />
-      <Comment />
-      <Comment />
-      <Comment />
-      <Comment />
-      <Comment />
+      {comments.map(comment => (
+        <Comment key={comment._id} comment={comment}/>
+      ))}
+
     </Container>
   );
 };

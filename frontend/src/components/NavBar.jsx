@@ -68,6 +68,10 @@ const Avatar = styled.img`
   background-color: #999;
 `;
 
+const Text = styled.h4`
+
+`;
+
 const NavBar = () => {
   const { currentUser } = useSelector((state) => state.user);
 
@@ -84,6 +88,7 @@ const NavBar = () => {
             <Avatar src={currentUser.img}/>
             {currentUser.name}
           </User>
+
         ) : (
           <Link to="signin" style={{ textDecoration: "none" }}>
             <Button>

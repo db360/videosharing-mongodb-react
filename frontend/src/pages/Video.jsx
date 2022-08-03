@@ -13,8 +13,11 @@ import Card from "../components/Card";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { fetchSuccess } from "../redux/videoSlice";
+import { dislike, fetchError, fetchSuccess, like } from "../redux/videoSlice";
 import { format } from "timeago.js";
+
+import ReactLoading from "react-loading";
+import { subscription } from "../redux/userSlice";
 
 const Container = styled.div`
   display: flex;
@@ -120,25 +123,51 @@ const Subscribe = styled.button`
   cursor: pointer;
 `;
 
+const LoadingContainer = styled.div`
+  width: 100%;
+  height: 65vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease-in-out;
+`;
+
+const LoadingTitle = styled.h1`
+  font-size: 35px;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+`;
+
+const VideoFrame = styled.div`
+  max-height: 720px;
+  width: 100%;
+  object-fit: cover;
+`;
+
 const Video = () => {
+  const [loading, setLoading] = useState(false);
+
   const { currentUser } = useSelector((state) => state.user);
   const { currentVideo } = useSelector((state) => state.video);
   const dispatch = useDispatch();
 
   // sacar el id del video de los params;
   const path = useLocation().pathname.split("/")[2];
+  // console.log(path);
 
   const [channel, setChannel] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const videoRes = await axios.get(`/videos/find/${path}`);
+        // console.log(videoRes.data.userId, "VideoRES");
         const channelRes = await axios.get(
           `/users/find/${videoRes.data.userId}`
         );
-
-        // console.log(videoRes.data.userId, "VideoRES")
         // console.log(channelRes, "channelRES");
 
         setChannel(channelRes.data);
@@ -146,83 +175,118 @@ const Video = () => {
       } catch (err) {
         console.log(err);
       }
+      setLoading(false);
     };
-
     fetchData();
   }, [path, dispatch]);
 
+  // console.log(currentVideo, "Video");
+
+  // console.log(loading);
+
   const handleLike = async () => {
-    await axios.put(`/users/like/${currentVideo._id}`)
-  }
+    try {
+      await axios.put(`/users/like/${currentVideo._id}`);
+      dispatch(like(currentUser._id));
+    } catch (error) {
+      alert("Please Sign In to like the video");
+      dispatch(fetchError(error));
+    }
+  };
   const handleDislike = async () => {
-    await axios.put(`/users/dislike/${currentVideo._id}`)
-  }
+    try {
+      await axios.put(`/users/dislike/${currentVideo._id}`);
+      dispatch(dislike(currentUser._id));
+    } catch (error) {
+      alert("Please Sign In to dislike the video");
+      dispatch(fetchError(error));
+    }
+  };
+
+  const handleSub = async () => {
+    currentUser.subscribedUsers.includes(channel._id)
+      ? await axios.put(`/users/unsub/${channel._id}`)
+      : await axios.put(`/users/sub/${channel._id}`);
+    dispatch(subscription(channel._id));
+  };
 
   // console.log(path);
   // console.log(currentVideo)
   return (
     <Container>
-      <Content>
-        <VideoWrapper>
-          <iframe
-            width="100%"
-            height="620"
-            src="https://www.youtube.com/embed/k3Vfj-e1Ma4"
-            title="Youtube Video Player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </VideoWrapper>
-        <Title>{currentVideo.title}</Title>
-        <Details>
-          <Info>
-            {currentVideo.views} views • {format(currentVideo.createdAt)}
-          </Info>
-          <Buttons>
-            <Button onClick={handleLike}>
-              {currentVideo.likes?.includes(currentUser._id) ? (
-                <ThumbUp />
-              ) : (
-                <ThumbUpOutlinedIcon />
-              )}{" "}
-              {currentVideo.likes?.length}
-            </Button>
-            <Button onClick={handleDislike}>
-              {currentVideo.dislikes?.includes(currentUser._id) ? (
-                <ThumbDown />
-              ) : (
-                <ThumbDownOutlinedIcon />
-              )}{" "}
-              {currentVideo.dislikes?.length}
-            </Button>
-            <Button>
-              <ReplyOutlinedIcon />
-              Share
-            </Button>
-            <Button>
-              <AddTaskOutlinedIcon />
-              Save
-            </Button>
-          </Buttons>
-        </Details>
-        <Hr />
-        <Channel>
-          <ChannelInfo>
-            <ImgContainer>
-              <Image src={channel.img} />
-            </ImgContainer>
-            <ChannelDetail>
-              <ChannelName>{channel.name}</ChannelName>
-              <ChannelCounter>{channel.subscribers} Subscribers</ChannelCounter>
-              <Description>{currentVideo?.desc}</Description>
-            </ChannelDetail>
-          </ChannelInfo>
-          <Subscribe>SUBSCRIBE</Subscribe>
-        </Channel>
-        <Hr />
-        <Comments />
-      </Content>
+      {loading && (
+        <LoadingContainer>
+          <ReactLoading
+            type={"bubbles"}
+            color="#0a4ecd"
+            height={150}
+            width={150}
+          />
+          <LoadingTitle>Loading...</LoadingTitle>
+        </LoadingContainer>
+      )}
+      {!loading && (
+        <Content>
+          <VideoWrapper>
+            <VideoFrame src={currentVideo.videoUrl} />
+
+          </VideoWrapper>
+          <Title>{currentVideo?.title}</Title>
+          <Details>
+            <Info>
+              {currentVideo?.views} views • {format(currentVideo?.createdAt)}
+            </Info>
+            <Buttons>
+              <Button onClick={handleLike}>
+                {currentVideo?.likes?.includes(currentUser?._id) ? (
+                  <ThumbUp />
+                ) : (
+                  <ThumbUpOutlinedIcon />
+                )}{" "}
+                {currentVideo?.likes?.length}
+              </Button>
+              <Button onClick={handleDislike}>
+                {currentVideo?.dislikes?.includes(currentUser?._id) ? (
+                  <ThumbDown />
+                ) : (
+                  <ThumbDownOutlinedIcon />
+                )}{" "}
+                {currentVideo?.dislikes?.length}
+              </Button>
+              <Button>
+                <ReplyOutlinedIcon />
+                Share
+              </Button>
+              <Button>
+                <AddTaskOutlinedIcon />
+                Save
+              </Button>
+            </Buttons>
+          </Details>
+          <Hr />
+          <Channel>
+            <ChannelInfo>
+              <ImgContainer>
+                <Image src={channel?.img} />
+              </ImgContainer>
+              <ChannelDetail>
+                <ChannelName>{channel?.name}</ChannelName>
+                <ChannelCounter>
+                  {channel?.subscribers} Subscribers
+                </ChannelCounter>
+                <Description>{currentVideo?.desc}</Description>
+              </ChannelDetail>
+            </ChannelInfo>
+            <Subscribe onClick={handleSub}>
+              {currentUser.subscribedUsers?.includes(channel?._id)
+                ? "SUBSCRIBED"
+                : "SUBSCRIBE"}
+            </Subscribe>
+          </Channel>
+          <Hr />
+          <Comments videoId={currentVideo?._id}/>
+        </Content>
+      )}
       {/* <Recommendations>
         <Card type="sm" />
         <Card type="sm" />
