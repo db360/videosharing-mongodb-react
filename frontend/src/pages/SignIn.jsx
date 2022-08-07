@@ -7,6 +7,7 @@ import { signInWithPopup } from 'firebase/auth';
 import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import { loginError, loginStart, loginSuccess } from "../redux/userSlice";
+import { useNavigate } from "react-router-dom";
 
 const Container = styled.div`
   display: flex;
@@ -75,6 +76,7 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleLogin = async (e) => {
@@ -86,6 +88,7 @@ const SignIn = () => {
         password
       });
       dispatch(loginSuccess(res.data));
+      navigate('/');
     } catch (err) {
       dispatch(loginError());
     }
@@ -103,6 +106,7 @@ const SignIn = () => {
     .then((res) => {
       dispatch(loginSuccess(res.data))
     })
+    .then(navigate('/'))
   })
     .catch((error) => {
       dispatch(loginError(error));

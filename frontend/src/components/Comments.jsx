@@ -63,7 +63,7 @@ const Comments = ({ videoId }) => {
     <Container>
       <NewComment>
         <ImgContainer>
-          <Avatar src={currentUser.img} />
+          <Avatar src={currentUser?.img} />
         </ImgContainer>
         <Input type="text" placeholder="Add a comment..." />
       </NewComment>

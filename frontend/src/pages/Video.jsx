@@ -18,6 +18,7 @@ import { format } from "timeago.js";
 
 import ReactLoading from "react-loading";
 import { subscription } from "../redux/userSlice";
+import Recommendations from "../components/Recommendations";
 
 const Container = styled.div`
   display: flex;
@@ -59,9 +60,6 @@ const Hr = styled.hr`
   border: 0.5px solid ${({ theme }) => theme.soft};
 `;
 
-const Recommendations = styled.div`
-  flex: 2;
-`;
 
 const Channel = styled.div`
   display: flex;
@@ -140,7 +138,7 @@ const LoadingTitle = styled.h1`
   transition: all 0.3s ease-in-out;
 `;
 
-const VideoFrame = styled.div`
+const VideoFrame = styled.video`
   max-height: 720px;
   width: 100%;
   object-fit: cover;
@@ -204,7 +202,7 @@ const Video = () => {
   };
 
   const handleSub = async () => {
-    currentUser.subscribedUsers.includes(channel._id)
+    currentUser?.subscribedUsers.includes(channel._id)
       ? await axios.put(`/users/unsub/${channel._id}`)
       : await axios.put(`/users/sub/${channel._id}`);
     dispatch(subscription(channel._id));
@@ -212,6 +210,7 @@ const Video = () => {
 
   // console.log(path);
   // console.log(currentVideo)
+  // console.log(currentVideo.videoUrl)
   return (
     <Container>
       {loading && (
@@ -228,8 +227,7 @@ const Video = () => {
       {!loading && (
         <Content>
           <VideoWrapper>
-            <VideoFrame src={currentVideo.videoUrl} />
-
+            <VideoFrame src={`${currentVideo?.videoUrl}`} controls/>
           </VideoWrapper>
           <Title>{currentVideo?.title}</Title>
           <Details>
@@ -278,7 +276,7 @@ const Video = () => {
               </ChannelDetail>
             </ChannelInfo>
             <Subscribe onClick={handleSub}>
-              {currentUser.subscribedUsers?.includes(channel?._id)
+              {currentUser?.subscribedUsers?.includes(channel?._id)
                 ? "SUBSCRIBED"
                 : "SUBSCRIBE"}
             </Subscribe>
@@ -287,19 +285,8 @@ const Video = () => {
           <Comments videoId={currentVideo?._id}/>
         </Content>
       )}
-      {/* <Recommendations>
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-        <Card type="sm" />
-      </Recommendations> */}
+      <Recommendations tags={currentVideo?.tags}/>
+
     </Container>
   );
 };
